@@ -1,0 +1,5 @@
+grant codeBase "file:$HOME/comp512/RMI/clientsrc/" {
+    permission java.security.AllPermission;
+};
+
+
