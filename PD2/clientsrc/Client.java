@@ -680,10 +680,11 @@ public class Client
 			    System.out.println("Shutting down all systems...");
 			    try{
 					boolean successful = mw.shutdown();
+					
 					if (successful) {
 						System.out.println("Successfully shut down all systems.");
 						System.out.println("Quitting client.");
-						System.exit(1);
+						System.exit(0);
 					}
 			    }
 			    catch(Exception e){
