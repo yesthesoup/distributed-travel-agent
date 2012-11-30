@@ -24,6 +24,9 @@ public class ResourceManagerFlightImpl
 	Hashtable<Integer, Long> transactionRecords = new Hashtable<Integer, Long>();
 	private static String historyFilepath = "flightHistories.txt";
 	private static String masterFilepath = "flightMaster.txt";
+	private static String configFilepath = "configFlight.txt";
+	private static boolean crashAfterVoteRequest = false;
+	private static boolean crashAfterDecision = false;
 
 	public static void main(String args[]) {
         // Figure out where server is running
@@ -48,7 +51,29 @@ public class ResourceManagerFlightImpl
 		 Registry registry = LocateRegistry.getRegistry(9876);
 		 registry.rebind("HAL9001FlightResourceManager", rm);
 		 
-		 
+		 try {
+     		FileInputStream cStream = new FileInputStream(configFilepath);
+     		DataInputStream cData = new DataInputStream(cStream);
+     		BufferedReader cReader = new BufferedReader(new InputStreamReader(cData));
+     		String line;
+     		String delims = "[:]";
+     		String[] tokens;
+     		while ((line = cReader.readLine()) != null) {
+     			tokens = line.split(delims);
+     			if (tokens[0] == "crashAfterVoteRequest") {
+     				if (tokens[1] == "1") {
+     					crashAfterVoteRequest = true;
+     				}
+     			} else if (tokens[0] == "crashAfterDecision") {
+     				if (tokens[1] == "1") {
+     					crashAfterDecision = true;
+     				}
+     			}
+     		}
+     		cData.close();
+     	} catch (Exception e) {
+     		e.printStackTrace();
+     	}
 
 		 try {
 			FileInputStream masterFileIn = new FileInputStream(masterFilepath);
@@ -466,8 +491,11 @@ public class ResourceManagerFlightImpl
     	return false;
     }
 
-    public boolean voteReq(int xid)
+    public boolean prepare(int xid)
     throws RemoteException {
+    	if (crashAfterVoteRequest) {
+    		selfDestruct();
+    	}
     	if (transactionRecords.containsKey(new Integer(xid))) {
     		System.out.println("Vote YES for " + xid);
     		return true;
@@ -512,6 +540,9 @@ public class ResourceManagerFlightImpl
     /* commit a transaction */
     public boolean commit(int xid)
     throws RemoteException, TransactionAbortedException, InvalidTransactionException {
+    	if (crashAfterDecision) {
+    		selfDestruct();
+    	}
     	if (flightHistories.containsKey(new Integer(xid))) {
             flightHistories.remove(new Integer(xid));
             shadowHistory();
@@ -523,6 +554,9 @@ public class ResourceManagerFlightImpl
     /* abort a transaction */
     public void abort(int xid)
     throws RemoteException, InvalidTransactionException {
+    	if (crashAfterDecision) {
+    		selfDestruct();
+    	}
     	if (flightHistories.containsKey(new Integer(xid))) {
             ArrayList<Object> flightHistory = flightHistories.remove(new Integer(xid));
             for (int i = flightHistory.size() - 1; i >= 0; i--) {
@@ -546,7 +580,8 @@ public class ResourceManagerFlightImpl
     	return true;
     }
 
-    public void selfDestruct() {
+    public void selfDestruct()
+    throws RemoteException {
     	System.exit(1);
     }
 }

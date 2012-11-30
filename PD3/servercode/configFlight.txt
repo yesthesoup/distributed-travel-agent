@@ -1,0 +1,2 @@
+crashAfterVoteRequest:0
+crashAfterDecision:0

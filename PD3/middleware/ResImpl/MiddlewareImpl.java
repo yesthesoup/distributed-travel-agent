@@ -1051,8 +1051,20 @@ public class MiddlewareImpl implements Middleware {
         transactionManager.abort(xid);
     }
 
-    public boolean crash(String rm) {
-        
+    public boolean crash(String rm)
+    throws RemoteException {
+        if (rm == "car") {
+            rmCar.selfDestruct();
+        } else if (rm == "flight") {
+            rmFlight.selfDestruct();
+        } else if (rm == "hotel") {
+            rmHotel.selfDestruct();
+        } else {
+            System.out.println("Invalid RM name.");
+            return false;
+        }
+        System.out.println("Successfully crashed " + rm + ".");
+        return true;
     }
 
     public boolean shutdown()

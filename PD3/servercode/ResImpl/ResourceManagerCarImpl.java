@@ -24,6 +24,9 @@ public class ResourceManagerCarImpl
 	Hashtable<Integer, Long> transactionRecords = new Hashtable<Integer, Long>();
 	private static String historyFilepath = "carHistories.txt";
 	private static String masterFilepath = "carMaster.txt";
+	private static String configFilepath = "configCar.txt";
+	private static boolean crashAfterVoteRequest = false;
+	private static boolean crashAfterDecision = false;
 
 	public static void main(String args[]) {
         // Figure out where server is running
@@ -47,7 +50,29 @@ public class ResourceManagerCarImpl
 			Registry registry = LocateRegistry.getRegistry(9876);
 			registry.rebind("HAL9001CarResourceManager", rm);
 
-			
+			try {
+	     		FileInputStream cStream = new FileInputStream(configFilepath);
+	     		DataInputStream cData = new DataInputStream(cStream);
+	     		BufferedReader cReader = new BufferedReader(new InputStreamReader(cData));
+	     		String line;
+	     		String delims = "[:]";
+	     		String[] tokens;
+	     		while ((line = cReader.readLine()) != null) {
+	     			tokens = line.split(delims);
+	     			if (tokens[0] == "crashAfterVoteRequest") {
+	     				if (tokens[1] == "1") {
+	     					crashAfterVoteRequest = true;
+	     				}
+	     			} else if (tokens[0] == "crashAfterDecision") {
+	     				if (tokens[1] == "1") {
+	     					crashAfterDecision = true;
+	     				}
+	     			}
+	     		}
+	     		cData.close();
+	     	} catch (Exception e) {
+	     		e.printStackTrace();
+	     	}
 
 			try {
 				FileInputStream masterFileIn = new FileInputStream(masterFilepath);
@@ -458,8 +483,11 @@ public class ResourceManagerCarImpl
     	return false;
     }
 
-    public boolean voteReq(int xid)
+    public boolean prepare(int xid)
     throws RemoteException {
+    	if (crashAfterVoteRequest) {
+    		selfDestruct();
+    	}
     	if (transactionRecords.containsKey(new Integer(xid))) {
     		System.out.println("Vote YES for " + xid);
     		return true;
@@ -504,6 +532,9 @@ public class ResourceManagerCarImpl
     /* commit a transaction */
     public boolean commit(int xid)
     throws RemoteException, TransactionAbortedException, InvalidTransactionException {
+    	if (crashAfterDecision) {
+    		selfDestruct();
+    	}
     	if (carHistories.containsKey(new Integer(xid))) {
             carHistories.remove(new Integer(xid));
             shadowHistory();
@@ -515,7 +546,10 @@ public class ResourceManagerCarImpl
     /* abort a transaction */
     public void abort(int xid)
     throws RemoteException, InvalidTransactionException {
-    	if (carHistories.containsKey(new Integer(xid))) {
+    	if (crashAfterDecision) {
+    		selfDestruct();
+    	}
+     	if (carHistories.containsKey(new Integer(xid))) {
             ArrayList<Object> carHistory = carHistories.remove(new Integer(xid));
             for (int i = carHistory.size() - 1; i >= 0; i--) {
                 if (carHistory.get(i) instanceof String) {
@@ -538,7 +572,8 @@ public class ResourceManagerCarImpl
     	return true;
     }
 
-    public void selfDestruct() {
+    public void selfDestruct()
+    throws RemoteException {
     	System.exit(1);
     }
 }

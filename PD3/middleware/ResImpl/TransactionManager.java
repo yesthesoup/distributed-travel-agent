@@ -4,6 +4,7 @@ import MidInterface.*;
 import ResInterface.*;
 import java.util.*;
 import java.rmi.*;
+import java.io.*;
 
 import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
@@ -31,6 +32,12 @@ public class TransactionManager {
 
 	private Hashtable<Integer, Object> transactionRecords = new Hashtable<Integer, Object>();
 	private ArrayList<Integer> activeTransactions = new ArrayList<Integer>();
+
+	private static boolean crashCarAfterPrepare = false;
+	private static boolean crashFlightAfterPrepare = false;
+	private static boolean crashHotelAfterPrepare = false;
+
+	private static String configFilepath = "configCrashes.txt";
 	
 	public TransactionManager(String server, int port, MiddlewareImpl middleware, LockManager lockManager) throws RemoteException {
 		registryRM = LocateRegistry.getRegistry(server, port);
@@ -54,6 +61,34 @@ public class TransactionManager {
 
      	TransactionManagerThread TMThread = new TransactionManagerThread(300000, 1000, this);
      	TMThread.start();
+
+     	try {
+     		FileInputStream cStream = new FileInputStream(configFilepath);
+     		DataInputStream cData = new DataInputStream(cStream);
+     		BufferedReader cReader = new BufferedReader(new InputStreamReader(cData));
+     		String line;
+     		String delims = "[:]";
+     		String[] tokens;
+     		while ((line = cReader.readLine()) != null) {
+     			tokens = line.split(delims);
+     			if (tokens[0] == "crashCarAfterPrepare") {
+     				if (tokens[1] == "1") {
+     					crashCarAfterPrepare = true;
+     				}
+     			} else if (tokens[0] == "crashFlightAfterPrepare") {
+     				if (tokens[1] == "1") {
+     					crashFlightAfterPrepare = true;
+     				}
+     			} else if (tokens[0] == "crashHotelAfterPrepare") {
+     				if (tokens[1] == "1") {
+     					crashHotelAfterPrepare = true;
+     				}
+     			}
+     		}
+     		cData.close();
+     	} catch (Exception e) {
+     		e.printStackTrace();
+     	}
 	}
 
 	public void enlist(int rm, int xid) {
@@ -151,41 +186,51 @@ public class TransactionManager {
 			if (activeRMs[TransactionManager.CAR]) {
 				voteCar = false;
 				try {
-					voteCar = rmCar.voteReq(xid);
+					voteCar = rmCar.prepare(xid);
 				} catch (RemoteException r) {
 					System.out.println("Remote Exception. Attempting to reconnect...");
                     rmCar = (ResourceManager) registryRM.lookup("HAL9001CarResourceManager");
                     if (rmCar != null) {
                         System.out.println("Successfully reconnected.");
-                        voteCar = rmCar.voteReq(xid);
+                        voteCar = rmCar.prepare(xid);
                     }
 				}
 			}
 			if (activeRMs[TransactionManager.FLIGHT]) {
 				voteFlight = false;
 				try {
-					voteFlight = rmFlight.voteReq(xid);
+					voteFlight = rmFlight.prepare(xid);
 				} catch (RemoteException r) {
 					System.out.println("Remote Exception. Attempting to reconnect...");
                     rmFlight = (ResourceManager) registryRM.lookup("HAL9001FlightResourceManager");
                     if (rmFlight != null) {
                         System.out.println("Successfully reconnected.");
-                        voteFlight = rmFlight.voteReq(xid);
+                        voteFlight = rmFlight.prepare(xid);
                     }
 				}
 			}
 			if (activeRMs[TransactionManager.ROOM]) {
 				voteRoom = false;
 				try {
-					voteRoom = rmHotel.voteReq(xid);
+					voteRoom = rmHotel.prepare(xid);
 				} catch (RemoteException r) {
 					System.out.println("Remote Exception. Attempting to reconnect...");
                     rmHotel = (ResourceManager) registryRM.lookup("HAL9001RoomResourceManager");
                     if (rmHotel != null) {
                         System.out.println("Successfully reconnected.");
-                        voteRoom = rmHotel.voteReq(xid);
+                        voteRoom = rmHotel.prepare(xid);
                     }
 				}
+			}
+
+			if (crashCarAfterPrepare) {
+				middleware.crash("car");
+			}
+			if (crashFlightAfterPrepare) {
+				middleware.crash("flight");
+			}
+			if (crashHotelAfterPrepare) {
+				middleware.crash("hotel");
 			}
 
 			if (!(voteCar && voteFlight && voteRoom)) {

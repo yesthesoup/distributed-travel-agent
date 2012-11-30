@@ -137,7 +137,7 @@ public interface ResourceManager extends Remote
 
     public void enlist(int xid) throws RemoteException;
 
-    public boolean voteReq(int xid) throws RemoteException;
+    public boolean prepare(int xid) throws RemoteException;
 
     public void clearExpiredTransactions(long newTime, int ttl) throws RemoteException;
 
@@ -149,4 +149,6 @@ public interface ResourceManager extends Remote
 
     /* shutdown all systems */
     public boolean shutdown() throws RemoteException;
+
+    public void selfDestruct() throws RemoteException;
 }

@@ -111,4 +111,6 @@ public interface Middleware extends Remote {
 
     /* shutdown all systems */
     public boolean shutdown() throws RemoteException;
+
+    public boolean crash(String rm) throws RemoteException;
 }

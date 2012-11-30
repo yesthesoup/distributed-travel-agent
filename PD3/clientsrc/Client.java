@@ -31,6 +31,7 @@ public class Client
 	    int numRooms;
 	    int numCars;
 	    String location;
+	    String rm;
 
 
 	    String server = "localhost";
@@ -692,6 +693,27 @@ public class Client
 					e.printStackTrace();
 			    }
 			    break;
+
+			case 27: //crash
+				if(arguments.size() != 2) {
+					client.wrongNumber();
+					break;
+				}
+				System.out.println("Crashing a system...");
+				try {
+					rm = client.getString(arguments.elementAt(1));
+					boolean successful = mw.crash(rm);
+					if (successful) {
+						System.out.println("Successfully crashed the RM.");
+					} else {
+						System.out.println("Failed to crash the RM.");
+					}
+				} catch(Exception e){
+					System.out.println("EXCEPTION:");
+					System.out.println(e.getMessage());
+					e.printStackTrace();
+			    }
+			    break;
 			    
 			default:
 			    System.out.println("The interface does not support this command.");
@@ -766,6 +788,8 @@ public class Client
 		    return 25;
 		else if (argument.compareToIgnoreCase("shutdown")==0)
 		    return 26;
+		else if (argument.compareToIgnoreCase("crash")==0)
+			return 27;
 		else
 		    return 666;
     }

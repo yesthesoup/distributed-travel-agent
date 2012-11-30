@@ -24,6 +24,9 @@ public class ResourceManagerRoomImpl
 	Hashtable<Integer, Long> transactionRecords = new Hashtable<Integer, Long>();
 	private static String historyFilepath = "roomHistories.txt";
 	private static String masterFilepath = "roomMaster.txt";
+	private static String configFilepath = "configHotel.txt";
+	private static boolean crashAfterVoteRequest = false;
+	private static boolean crashAfterDecision = false;
 
 	public static void main(String args[]) {
         // Figure out where server is running
@@ -48,6 +51,30 @@ public class ResourceManagerRoomImpl
 		 Registry registry = LocateRegistry.getRegistry(9876);
 		 registry.rebind("HAL9001RoomResourceManager", rm);
 
+
+		 try {
+     		FileInputStream cStream = new FileInputStream(configFilepath);
+     		DataInputStream cData = new DataInputStream(cStream);
+     		BufferedReader cReader = new BufferedReader(new InputStreamReader(cData));
+     		String line;
+     		String delims = "[:]";
+     		String[] tokens;
+     		while ((line = cReader.readLine()) != null) {
+     			tokens = line.split(delims);
+     			if (tokens[0] == "crashAfterVoteRequest") {
+     				if (tokens[1] == "1") {
+     					crashAfterVoteRequest = true;
+     				}
+     			} else if (tokens[0] == "crashAfterDecision") {
+     				if (tokens[1] == "1") {
+     					crashAfterDecision = true;
+     				}
+     			}
+     		}
+     		cData.close();
+     	} catch (Exception e) {
+     		e.printStackTrace();
+     	}
 
 		 try {
 			FileInputStream masterFileIn = new FileInputStream(masterFilepath);
@@ -464,8 +491,11 @@ public class ResourceManagerRoomImpl
     	return false;
     }
 
-    public boolean voteReq(int xid)
+    public boolean prepare(int xid)
     throws RemoteException {
+    	if (crashAfterVoteRequest) {
+    		selfDestruct();
+    	}
     	if (transactionRecords.containsKey(new Integer(xid))) {
     		System.out.println("Vote YES for " + xid);
     		return true;
@@ -510,6 +540,9 @@ public class ResourceManagerRoomImpl
     /* commit a transaction */
     public boolean commit(int xid)
     throws RemoteException, TransactionAbortedException, InvalidTransactionException {
+    	if (crashAfterDecision) {
+    		selfDestruct();
+    	}
     	if (roomHistories.containsKey(new Integer(xid))) {
             roomHistories.remove(new Integer(xid));
             shadowHistory();
@@ -521,6 +554,9 @@ public class ResourceManagerRoomImpl
     /* abort a transaction */
     public void abort(int xid)
     throws RemoteException, InvalidTransactionException {
+    	if (crashAfterDecision) {
+    		selfDestruct();
+    	}
     	if (roomHistories.containsKey(new Integer(xid))) {
             ArrayList<Object> roomHistory = roomHistories.remove(new Integer(xid));
             for (int i = roomHistory.size() - 1; i >= 0; i--) {
@@ -544,7 +580,8 @@ public class ResourceManagerRoomImpl
     	return true;
     }
 
-    public void selfDestruct() {
+    public void selfDestruct()
+    throws RemoteException {
     	System.exit(1);
     }
 

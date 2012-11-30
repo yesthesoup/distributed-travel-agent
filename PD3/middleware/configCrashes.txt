@@ -1,0 +1,3 @@
+crashCarAfterPrepare:0
+crashFlightAfterPrepare:0
+crashHotelAfterPrepare:0
