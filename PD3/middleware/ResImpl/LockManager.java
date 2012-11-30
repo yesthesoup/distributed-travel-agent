@@ -63,9 +63,30 @@ public class LockManager
                         if (bConvert.get(0) == true) {
                             // lock conversion 
                             synchronized (lockTable) {
-                                //retrieve existing read locks and convert
-                                ((TrxnObj) lockTable.get(trxnObj)).setLockType(TrxnObj.WRITE);
-                                ((DataObj) lockTable.get(dataObj)).setLockType(DataObj.WRITE);
+                                Vector vect = lockTable.elements(dataObj);
+                                DataObj dataObj2;
+                                TrxnObj trxnObj2;
+                                int size = vect.size();
+
+                                //look for existing dataObj
+                                for (int i = 0; i < size; i++) {
+                                    dataObj2 = (DataObj) vect.elementAt(i);
+                                    if (dataObj.getXId() == dataObj2.getXId()) {
+                                        //found the existing lock 
+                                        //convert it
+                                        dataObj2.setLockType(DataObj.WRITE);
+                                    }
+                                }
+
+                                //look for existing trxnObj
+                                for (int i = 0; i < size; i++) {
+                                    trxnObj2 = (TrxnObj) vect.elementAt(i);
+                                    if (trxnObj.getXId() == trxnObj2.getXId()) {
+                                        //found the existing lock 
+                                        //convert it
+                                        trxnObj2.setLockType(DataObj.WRITE);
+                                    }
+                                }
                             }
 
                         } else {
