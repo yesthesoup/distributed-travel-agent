@@ -19,8 +19,8 @@ import java.rmi.server.UnicastRemoteObject;
 public class ResourceManagerCarImpl
 	implements ResourceManager {
 	
-	protected static RMHashtable m_itemHT = new RMHashtable();
-	static Hashtable<Integer, ArrayList<Object>> carHistories = new Hashtable<Integer, ArrayList<Object>>();
+	protected RMHashtable m_itemHT = new RMHashtable();
+	Hashtable<Integer, ArrayList<Object>> carHistories = new Hashtable<Integer, ArrayList<Object>>();
 	Hashtable<Integer, Long> transactionRecords = new Hashtable<Integer, Long>();
 	private static String historyFilepath = "carHistories.txt";
 	private static String masterFilepath = "carMaster.txt";
@@ -52,17 +52,18 @@ public class ResourceManagerCarImpl
 			try {
 				FileInputStream masterFileIn = new FileInputStream(masterFilepath);
 				ObjectInputStream masterDataIn = new ObjectInputStream(masterFileIn);
-				m_itemHT = (RMHashtable)masterDataIn.readObject();
+				obj.m_itemHT = (RMHashtable)masterDataIn.readObject();
 				masterDataIn.close();
 				masterFileIn.close();
 
 				FileInputStream historyFileIn = new FileInputStream(historyFilepath);
 				ObjectInputStream historyDataIn = new ObjectInputStream(historyFileIn);
-				carHistories = (Hashtable<Integer, ArrayList<Object>>)historyDataIn.readObject();
+				obj.carHistories = (Hashtable<Integer, ArrayList<Object>>)historyDataIn.readObject();
 				historyDataIn.close();
 				historyFileIn.close();
+				System.out.println("Recovered state from shadow files.");
 			} catch (FileNotFoundException e) {
-				System.err.println("No recovery data found. Creating fresh RM");
+				System.out.println("No recovery data found. Creating fresh RM");
 			}
 			
 			System.err.println("Server ready");
@@ -84,6 +85,7 @@ public class ResourceManagerCarImpl
 			historyDataOut.writeObject(carHistories);
 			historyDataOut.close();
 			historyFileOut.close();
+			System.out.println("History shadow file written.");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -96,6 +98,7 @@ public class ResourceManagerCarImpl
 			masterDataOut.writeObject(m_itemHT);
 			masterDataOut.close();
 			masterFileOut.close();
+			System.out.println("Master shadow file written.");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -253,7 +256,8 @@ public class ResourceManagerCarImpl
 			// car location doesn't exist...add it
 			Car newObj = new Car( location, count, price );
 			writeData( id, newObj.getKey(), newObj );
-			ArrayList<Object> carHistory = carHistories.get(new Integer(xid));
+			ArrayList<Object> carHistory = (ArrayList<Object>)carHistories.get(new Integer(xid));
+			System.out.println(carHistory);
             carHistory.add(location);
             carHistories.put(new Integer(xid), carHistory);
 			Trace.info("RM::addCars(" + id + ") created new location " + location + ", count=" + count + ", price=$" + price );
@@ -457,6 +461,7 @@ public class ResourceManagerCarImpl
     public boolean voteReq(int xid)
     throws RemoteException {
     	if (transactionRecords.containsKey(new Integer(xid))) {
+    		System.out.println("Vote YES for " + xid);
     		return true;
     	}
     	try {
@@ -464,6 +469,7 @@ public class ResourceManagerCarImpl
     	} catch (Exception e) {
     		e.printStackTrace();
     	}
+    	System.out.println("Votes NO for " + xid);
     	return false;
     }
 
@@ -471,6 +477,7 @@ public class ResourceManagerCarImpl
     throws RemoteException {
     	Long currentTime = new Long(System.currentTimeMillis());
 		transactionRecords.put(new Integer(xid), currentTime);
+		carHistories.put(new Integer(xid), new ArrayList<Object>());
     }
 
     public void updateTTL(int xid) {
@@ -478,11 +485,13 @@ public class ResourceManagerCarImpl
 		transactionRecords.put(new Integer(xid), currentTime);
 	}
 
-	public void clearExpiredTransactions(long newTime, int ttl) {
+	public synchronized void clearExpiredTransactions(long newTime, int ttl)
+	throws RemoteException {
 		for (Integer xid : transactionRecords.keySet()) {
 			long rmTime = ((Long) transactionRecords.get(xid)).longValue();
 			if ((newTime - rmTime) > ttl) {
 				transactionRecords.remove(xid);
+				System.out.println("Transaction " + xid.intValue() + " expirted. Aborting.");
 				try {
 					abort(xid.intValue());
 				} catch (Exception e) {
@@ -499,6 +508,7 @@ public class ResourceManagerCarImpl
             carHistories.remove(new Integer(xid));
             shadowHistory();
         }
+        System.out.println("Successfully committed " + xid + ".");
         return true;
     }
 
@@ -517,6 +527,7 @@ public class ResourceManagerCarImpl
                 }
             }
             shadowData();
+            System.out.println("Successfully aborted " + xid + ".");
         }
     }
 

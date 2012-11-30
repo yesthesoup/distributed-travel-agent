@@ -1,4 +1,4 @@
-grant codeBase "file:$HOME/comp512/PD2/clientsrc/" {
+grant codeBase "file:$HOME/comp512/gitstuff/distributed-travel-agent/PD3/clientsrc/" {
     permission java.security.AllPermission;
 };
 

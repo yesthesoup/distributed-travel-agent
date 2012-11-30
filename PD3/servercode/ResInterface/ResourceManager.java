@@ -139,7 +139,7 @@ public interface ResourceManager extends Remote
 
     public boolean voteReq(int xid) throws RemoteException;
 
-    public void clearExpiredTransactions(long newTime, int ttl);
+    public void clearExpiredTransactions(long newTime, int ttl) throws RemoteException;
 
     /* commit a transaction */
     public boolean commit(int xid) throws RemoteException, TransactionAbortedException, InvalidTransactionException;

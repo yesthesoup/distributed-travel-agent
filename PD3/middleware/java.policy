@@ -1,4 +1,4 @@
-grant codeBase "file:$HOME/comp512/RMI/middleware/" {
+grant codeBase "file:$HOME/comp512/gitstuff/distributed-travel-agent/PD3/middleware/" {
     permission java.security.AllPermission;
 };
 

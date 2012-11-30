@@ -1,6 +1,7 @@
 package ResImpl;
 
 import ResInterface.*;
+import java.rmi.RemoteException;
 
 public class TransactionExpiryThread extends Thread {
 
@@ -18,7 +19,11 @@ public class TransactionExpiryThread extends Thread {
     public void run() {
         while(running) {
             long currentTime = System.currentTimeMillis();
-            rm.clearExpiredTransactions(currentTime, ttl);
+            try {
+                rm.clearExpiredTransactions(currentTime, ttl);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
             try {
 				Thread.sleep(refresh_time);
 			} catch (InterruptedException e) {

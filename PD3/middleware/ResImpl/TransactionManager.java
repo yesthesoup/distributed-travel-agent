@@ -59,6 +59,9 @@ public class TransactionManager {
 	public void enlist(int rm, int xid) {
 		try {
 			ArrayList<Object> rmInfo = (ArrayList<Object>) transactionRecords.get(new Integer(xid));
+			if (rmInfo == null) {
+				System.out.println("Invalid XID: " + xid);
+			}
 			boolean[] activeRMs = (boolean[])(rmInfo.get(RM_INDEX));
 			if (rm == TransactionManager.CAR) {
 				if (!activeRMs[TransactionManager.CAR]) {
@@ -128,6 +131,7 @@ public class TransactionManager {
                                     String.valueOf( Math.round( Math.random() * 100 + 1 )));
 		transactionRecords.put(new Integer(xid), rmInfo);
 		activeTransactions.add(xid);
+		System.out.println("NEW Transaction: " + xid);
         return xid;
 	}
 
@@ -185,9 +189,12 @@ public class TransactionManager {
 			}
 
 			if (!(voteCar && voteFlight && voteRoom)) {
+				System.out.println("Not all transactions voted YES. Aborting.");
 				abort(xid);
 				return false;
 			}
+
+			System.out.println("All Transactions voted YES. Committing.");
 
 			boolean unlockVariables = lockManager.UnlockAll(xid);
 
@@ -235,7 +242,11 @@ public class TransactionManager {
 
 			transactionRecords.remove(new Integer(xid));
 			activeTransactions.remove(new Integer(xid));
-
+			if (unlockVariables && committedCar && committedFlight && committedRoom && committedCustomer) {
+				System.out.println("Successfully committed!");
+			} else {
+				System.out.println("Commit failed.");
+			}
 			return unlockVariables && committedCar && committedFlight && committedRoom && committedCustomer;
 		} catch (Exception e) {
 			System.out.println("TM EXCEPTION:");
@@ -291,6 +302,7 @@ public class TransactionManager {
 
 			transactionRecords.remove(new Integer(xid));
 			activeTransactions.remove(new Integer(xid));
+			System.out.println("Successfully aborted!");
 		} catch (Exception e) {
 			System.out.println("TM EXCEPTION:");
             System.out.println(e.getMessage());

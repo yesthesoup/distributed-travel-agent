@@ -83,8 +83,9 @@ public class MiddlewareImpl implements Middleware {
                 customerHistories = (Hashtable<Integer, ArrayList<Object>>)historyDataIn.readObject();
                 historyDataIn.close();
                 historyFileIn.close();
+                System.out.println("Recovered state from shadow files.");
             } catch (FileNotFoundException e) {
-                System.err.println("No recovery data found. Creating fresh RM");
+                System.out.println("No recovery data found. Creating fresh RM");
             }
          } catch (Exception e) {
 
@@ -102,6 +103,7 @@ public class MiddlewareImpl implements Middleware {
             historyDataOut.writeObject(customerHistories);
             historyDataOut.close();
             historyFileOut.close();
+            System.out.println("History shadow file written.");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -114,6 +116,7 @@ public class MiddlewareImpl implements Middleware {
             masterDataOut.writeObject(m_itemHT);
             masterDataOut.close();
             masterFileOut.close();
+            System.out.println("Master shadow file written.");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -1046,6 +1049,10 @@ public class MiddlewareImpl implements Middleware {
     public void abort(int xid)
     throws RemoteException, InvalidTransactionException {
         transactionManager.abort(xid);
+    }
+
+    public boolean crash(String rm) {
+        
     }
 
     public boolean shutdown()
