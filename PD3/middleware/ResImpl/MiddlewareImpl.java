@@ -1053,16 +1053,21 @@ public class MiddlewareImpl implements Middleware {
 
     public boolean crash(String rm)
     throws RemoteException {
-        if (rm == "car") {
-            rmCar.selfDestruct();
-        } else if (rm == "flight") {
-            rmFlight.selfDestruct();
-        } else if (rm == "hotel") {
-            rmHotel.selfDestruct();
-        } else {
-            System.out.println("Invalid RM name.");
-            return false;
+        try {
+            if (rm.equals("car")) {
+                rmCar.selfDestruct();
+            } else if (rm.equals("flight")) {
+                rmFlight.selfDestruct();
+            } else if (rm.equals("hotel")) {
+                rmHotel.selfDestruct();
+            } else {
+                System.out.println("Invalid RM name.");
+                return false;
+            }
+        } catch (Exception e) {
+            System.out.println("Crashed!");
         }
+        
         System.out.println("Successfully crashed " + rm + ".");
         return true;
     }

@@ -87,6 +87,11 @@ public class ResourceManagerFlightImpl
 			obj.flightHistories = (Hashtable<Integer, ArrayList<Object>>)historyDataIn.readObject();
 			historyDataIn.close();
 			historyFileIn.close();
+			Set<Integer> keys = obj.flightHistories.keySet();
+			for (Integer xid : keys) {
+				obj.abort(xid.intValue());
+			}
+
 			System.out.println("Recovered state from shadow files.");
 		} catch (FileNotFoundException e) {
 			System.out.println("No recovery data found. Creating fresh RM");

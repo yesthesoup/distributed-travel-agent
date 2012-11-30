@@ -1,2 +1,2 @@
-crashAfterVoteRequest:0
+crashAfterVoteRequest:1
 crashAfterDecision:0

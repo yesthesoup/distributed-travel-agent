@@ -86,6 +86,11 @@ public class ResourceManagerCarImpl
 				obj.carHistories = (Hashtable<Integer, ArrayList<Object>>)historyDataIn.readObject();
 				historyDataIn.close();
 				historyFileIn.close();
+				Set<Integer> keys = obj.carHistories.keySet();
+				for (Integer xid : keys) {
+					obj.abort(xid.intValue());
+				}
+
 				System.out.println("Recovered state from shadow files.");
 			} catch (FileNotFoundException e) {
 				System.out.println("No recovery data found. Creating fresh RM");

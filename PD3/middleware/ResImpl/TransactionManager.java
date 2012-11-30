@@ -192,7 +192,11 @@ public class TransactionManager {
                     rmCar = (ResourceManager) registryRM.lookup("HAL9001CarResourceManager");
                     if (rmCar != null) {
                         System.out.println("Successfully reconnected.");
-                        voteCar = rmCar.prepare(xid);
+                        try {
+                        	voteCar = rmCar.prepare(xid);
+                        } catch (Exception e) {
+                        	voteCar = false;
+                        }
                     }
 				}
 			}
@@ -205,7 +209,11 @@ public class TransactionManager {
                     rmFlight = (ResourceManager) registryRM.lookup("HAL9001FlightResourceManager");
                     if (rmFlight != null) {
                         System.out.println("Successfully reconnected.");
-                        voteFlight = rmFlight.prepare(xid);
+                        try {
+                        	voteFlight = rmFlight.prepare(xid);
+                        } catch (Exception e) {
+                        	voteFlight = false;
+                        }
                     }
 				}
 			}
@@ -218,7 +226,11 @@ public class TransactionManager {
                     rmHotel = (ResourceManager) registryRM.lookup("HAL9001RoomResourceManager");
                     if (rmHotel != null) {
                         System.out.println("Successfully reconnected.");
-                        voteRoom = rmHotel.prepare(xid);
+                        try {
+                        	voteRoom = rmHotel.prepare(xid);
+                        } catch (Exception e) {
+                        	voteRoom = false;
+                        }
                     }
 				}
 			}
@@ -313,7 +325,11 @@ public class TransactionManager {
                     rmCar = (ResourceManager) registryRM.lookup("HAL9001CarResourceManager");
                     if (rmCar != null) {
                         System.out.println("Successfully reconnected.");
-                        rmCar.abort(xid);
+                        try {
+                        	rmCar.abort(xid);
+                        } catch (Exception e) {
+                        	System.out.println("System already down.");
+                        }
                     }
 				}
 			}
@@ -325,7 +341,11 @@ public class TransactionManager {
                     rmFlight = (ResourceManager) registryRM.lookup("HAL9001FlightResourceManager");
                     if (rmFlight != null) {
                         System.out.println("Successfully reconnected.");
-                        rmFlight.abort(xid);
+                        try {
+                        	rmFlight.abort(xid);
+                        } catch (Exception e) {
+                        	System.out.println("System already down.");
+                        }
                     }
 				}
 			}
@@ -338,7 +358,11 @@ public class TransactionManager {
                     rmHotel = (ResourceManager) registryRM.lookup("HAL9001RoomResourceManager");
                     if (rmHotel != null) {
                         System.out.println("Successfully reconnected.");
-                        rmHotel.abort(xid);
+                        try {
+                        	rmHotel.abort(xid);
+                        } catch (Exception e) {
+                        	System.out.println("System already down.");
+                        }
                     }
 				}
 			}
