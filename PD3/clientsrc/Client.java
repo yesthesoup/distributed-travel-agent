@@ -702,7 +702,13 @@ public class Client
 				System.out.println("Crashing a system...");
 				try {
 					rm = client.getString(arguments.elementAt(1));
-					boolean successful = mw.crash(rm);
+					boolean successful = false;
+					try {
+						successful = mw.crash(rm);
+					} catch (Exception e) {
+						//System.out.println("Crashing exception caught.");
+					}
+
 					if (successful) {
 						System.out.println("Successfully crashed the RM.");
 					} else {
